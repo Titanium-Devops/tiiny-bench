@@ -122,7 +122,9 @@ jobs:
     # looks finished with every control dead.
     name: page (headless chromium)
     runs-on: [self-hosted, tiiny-bench]
-    container: mcr.microsoft.com/playwright:v1.55.0-noble
+    container:
+      image: mcr.microsoft.com/playwright:v1.55.0-noble
+      options: --user 1003:1003
     steps:
       - uses: actions/checkout@v4
 
