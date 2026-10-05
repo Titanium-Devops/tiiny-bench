@@ -124,7 +124,6 @@ jobs:
     runs-on: blacksmith-2vcpu-ubuntu-2404
     container:
       image: mcr.microsoft.com/playwright:v1.55.0-noble
-      options: --user 1003:1003
     steps:
       - uses: actions/checkout@v4
 
