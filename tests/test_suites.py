@@ -52,6 +52,19 @@ class DeviceCase(unittest.TestCase):
     loaded = None
 
     def setUp(self):
+        # Authentication is part of this fake boundary too. Without an
+        # explicit value, developer machines can pass by reading a saved key
+        # while a clean CI machine exits before it ever calls the fake.
+        saved_key = os.environ.get("TIINY_KEY")
+        os.environ["TIINY_KEY"] = "test-key"
+
+        def restore_key():
+            if saved_key is None:
+                os.environ.pop("TIINY_KEY", None)
+            else:
+                os.environ["TIINY_KEY"] = saved_key
+        self.addCleanup(restore_key)
+
         self.fake = FakeDevice(loaded=self.loaded).start()
         self.addCleanup(self.fake.stop)
         saved = (bench.HOST, dict(bench.SERVICES), dict(bench.TRANSPORT),
