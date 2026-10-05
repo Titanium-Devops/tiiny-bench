@@ -1,9 +1,8 @@
-# Three operating systems, because the bug this file exists to catch was a
+# Two operating systems, because the bug this file exists to catch was a
 # Windows one: discovery shelled out to `ip` and then `ifconfig`, Windows has
 # neither, and a tester with a Tiiny on the same network was told there was no
-# Tiiny. Nothing here needs a device. Nothing here puts a broadcast on the wire:
-# GitHub's macOS runner refuses one outright, and a test that depended on the
-# runner's network would be testing the runner.
+# Tiiny. Nothing here needs a device. Nothing here puts a broadcast on the wire,
+# and a test that depended on the runner's network would be testing the runner.
 name: ci
 
 on:
@@ -25,7 +24,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest, macos-latest, windows-latest]
+        os: [blacksmith-2vcpu-ubuntu-2404, blacksmith-4vcpu-windows-2025]
     steps:
       - uses: actions/checkout@v4
 
@@ -114,7 +113,7 @@ jobs:
     # that script stops the whole thing, the page still paints, and the app
     # looks finished with every control dead.
     name: page (headless chromium)
-    runs-on: ubuntu-latest
+    runs-on: blacksmith-2vcpu-ubuntu-2404
     steps:
       - uses: actions/checkout@v4
 
