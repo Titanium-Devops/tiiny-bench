@@ -14,7 +14,7 @@ permissions:
 jobs:
   test:
     name: test (${{ matrix.encoding }})
-    runs-on: [self-hosted, tiiny-bench]
+    runs-on: blacksmith-2vcpu-ubuntu-2404
     strategy:
       fail-fast: false
       matrix:
@@ -121,10 +121,9 @@ jobs:
     # that script stops the whole thing, the page still paints, and the app
     # looks finished with every control dead.
     name: page (headless chromium)
-    runs-on: [self-hosted, tiiny-bench]
+    runs-on: blacksmith-2vcpu-ubuntu-2404
     container:
       image: mcr.microsoft.com/playwright:v1.55.0-noble
-      options: --user 1003:1003
     steps:
       - uses: actions/checkout@v4
 
