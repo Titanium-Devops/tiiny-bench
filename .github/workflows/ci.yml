@@ -122,6 +122,7 @@ jobs:
     # looks finished with every control dead.
     name: page (headless chromium)
     runs-on: [self-hosted, tiiny-bench]
+    container: mcr.microsoft.com/playwright:v1.55.0-noble
     steps:
       - uses: actions/checkout@v4
 
@@ -136,8 +137,7 @@ jobs:
       - name: a browser
         run: |
           npm init -y > /dev/null
-          npm install --no-save "playwright@^1"
-          npx playwright install --with-deps chromium
+          npm install --no-save "playwright@1.55.0"
 
       - name: start the app with no device and no key
         run: |
