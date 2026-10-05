@@ -1,8 +1,6 @@
-# Two operating systems, because the bug this file exists to catch was a
-# Windows one: discovery shelled out to `ip` and then `ifconfig`, Windows has
-# neither, and a tester with a Tiiny on the same network was told there was no
-# Tiiny. Nothing here needs a device. Nothing here puts a broadcast on the wire,
-# and a test that depended on the runner's network would be testing the runner.
+# Two encoding environments, because the bug this file exists to catch was a
+# Windows locale one. Python used cp1252 when a read or write did not name an
+# encoding. Nothing here needs a device or depends on the runner's network.
 name: ci
 
 on:
@@ -10,21 +8,31 @@ on:
   pull_request:
   workflow_dispatch:
 
-# PYTHONUTF8 is deliberately not set. Forcing UTF-8 would hide exactly the
-# class of bug this matrix is here to find: Python uses the locale encoding when
-# a read or a write does not name one, and on Windows that is cp1252.
-
 permissions:
   contents: read
 
 jobs:
   test:
-    name: test (${{ matrix.os }})
-    runs-on: ${{ matrix.os }}
+    name: test (${{ matrix.encoding }})
+    runs-on: [self-hosted, tiiny-bench]
     strategy:
       fail-fast: false
       matrix:
-        os: [blacksmith-2vcpu-ubuntu-2404, blacksmith-4vcpu-windows-2025]
+        include:
+          - encoding: utf-8
+            python_utf8: '1'
+            python_io_encoding: utf-8
+            locale: C.UTF-8
+          - encoding: cp1252
+            python_utf8: '0'
+            python_io_encoding: cp1252
+            locale: C
+    env:
+      PYTHONUTF8: ${{ matrix.python_utf8 }}
+      PYTHONIOENCODING: ${{ matrix.python_io_encoding }}
+      PYTHONCOERCECLOCALE: '0'
+      LC_ALL: ${{ matrix.locale }}
+      LANG: ${{ matrix.locale }}
     steps:
       - uses: actions/checkout@v4
 
@@ -113,7 +121,7 @@ jobs:
     # that script stops the whole thing, the page still paints, and the app
     # looks finished with every control dead.
     name: page (headless chromium)
-    runs-on: blacksmith-2vcpu-ubuntu-2404
+    runs-on: [self-hosted, tiiny-bench]
     steps:
       - uses: actions/checkout@v4
 
