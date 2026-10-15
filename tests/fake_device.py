@@ -155,6 +155,15 @@ class FakeState:
         # `loaded`, because the device reserves its units the moment it accepts
         # the start, but it reports "loading" and will not answer an inference.
         self.pending = {}
+        # Units the device's npu/status still counts as used that belong to no
+        # model in the running list: a load that rolled back (or a stop that
+        # never returned its units) on real firmware. {model_id: units}. The
+        # running list drops the model; npu/status keeps the units. This is the
+        # ghost allocation a reviewer hit as "99/100 used, one 52-unit model
+        # loaded". `leak_rollbacks` routes a rolled-back load here instead of
+        # releasing it, so a POST-driven load can reproduce it too.
+        self.ghost = {}
+        self.leak_rollbacks = False
         self.guard = threading.Lock()
         self.chat_bodies = []
         # A reason phrase to fail the vendor catalogue read with, or None to
@@ -249,6 +258,10 @@ class FakeState:
             self.pending.pop(model_id, None)
             if job["rollback"] and model_id in self.loaded:
                 self.loaded.remove(model_id)
+                if self.leak_rollbacks:
+                    # Firmware bug: the model leaves the running list but its
+                    # units stay charged against the NPU budget.
+                    self.ghost[model_id] = self.cost(model_id)
 
     # ------------------------------------------------------------- payloads
     def models_payload(self):
@@ -289,7 +302,10 @@ class FakeState:
             loaded = list(self.loaded)
             models = [{"model_id": m, "npu_usage": self.cost(m),
                        "status": self.status_of(m)} for m in loaded]
-        used = sum(self.cost(m) for m in loaded)
+        # The device charges its budget for the ghost units too, but does not
+        # list those models here (they are gone from running), so npu_used can
+        # exceed the sum of the listed models. That gap is the whole bug.
+        used = sum(self.cost(m) for m in loaded) + sum(self.ghost.values())
         return {"npu_total": self.npu_total, "npu_used": used,
                 "npu_available": max(0, self.npu_total - used), "models": models}
 

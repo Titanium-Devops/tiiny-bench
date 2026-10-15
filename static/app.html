@@ -438,6 +438,7 @@ label.lab{font-size:10px;letter-spacing:.13em;text-transform:uppercase;color:var
   margin-bottom:6px}
 .rail-device-head b{margin-left:auto;color:var(--ink);font-weight:600;
   font-variant-numeric:tabular-nums}
+.rail-held{margin-top:6px;font-size:10.5px;line-height:1.4;color:var(--hot)}
 .instance-card{background:var(--ground);border:1px solid var(--line);
   border-left:3px solid var(--good);border-radius:5px;padding:10px 11px;margin-top:9px}
 .instance-card.loading{border-left-color:var(--hot)}
@@ -2261,6 +2262,17 @@ function paintInstances(payload){
       meter.appendChild(fill);
       row.appendChild(meter);
     }
+    if (Number(railDevice.npu_held) > 0){
+      /* The device charges more units than the loaded models account for:
+         a load that rolled back, or a stop that never returned its units.
+         Say so, because otherwise the meter and the Loaded panel contradict
+         each other with no explanation and a load gets refused with room
+         apparently free. */
+      row.appendChild(el('div','rail-held',
+        railDevice.npu_held + ' units held by a model not listed, from a load '
+        + 'that rolled back or did not release. Restart the device runtime to '
+        + 'reclaim them.'));
+    }
     box.appendChild(row);
   }
   var list = $('instances-list');
@@ -2352,6 +2364,11 @@ function updateLoadHint(){
     hint.textContent = sh(option.value) + ' asks for ' + need + ' NPU units and only '
       + free + ' are free on ' + name + '. The device would accept the load and roll it '
       + 'back a moment later without saying so, so it is refused here.';
+    if (Number(railDevice.npu_held) > 0){
+      hint.textContent += ' ' + railDevice.npu_held + ' of the used units are held '
+        + 'by a model not listed (a load that rolled back); restart the runtime to '
+        + 'reclaim them.';
+    }
     $('load-btn').disabled = true;
     return;
   }

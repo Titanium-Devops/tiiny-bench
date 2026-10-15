@@ -1141,6 +1141,15 @@ class Handler(BaseHTTPRequestHandler):
                                    or "running",
                          "instance_id": inst.get("instance_id")
                                         or spare.get("instance_id")})
+        # The meter reads the device's own npu_used; the Loaded panel reads the
+        # running list. On real firmware a load that rolled back (or a stop that
+        # did not return its units) leaves units charged against the budget with
+        # no model in the running list, so the two disagree and a load is
+        # refused though the panel shows room. Name that gap rather than show
+        # two numbers that silently contradict each other.
+        listed = sum(r.get("npu_usage") or 0 for r in rows)
+        record["npu_listed"] = listed
+        record["npu_held"] = max(0, record["npu_used"] - listed)
         return {"instances": rows, "devices": [record]}
 
     def refuse_load(self, tok, model_id, chat_required=True):
